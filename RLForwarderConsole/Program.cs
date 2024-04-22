@@ -61,6 +61,8 @@ namespace RLForwarderConsole
         {
             try
             {
+
+
                 SerialPort sp = (SerialPort)sender;
                 string buffer = sp.ReadExisting();
                 string[] lines = buffer.Split('\r');
@@ -129,9 +131,12 @@ namespace RLForwarderConsole
         }
         private string CleanLine(string line)
         {
+            // This function is responsible for translating and removing unnecessary information from the data sent by the POS system.
+            // It is specific to a particular sales system, in this case, the Polish PC-Market (PC-POS).
+
             Dictionary<string, string> translations = new Dictionary<string, string>
             {
-                {"Forma płatn.", "Payment method:"},
+                {"Forma platn.", "Payment method:"},
                 {"Razem:", "Total:"},
                 {"Reszta:", "Change:"},
                 {">> Paragon anulowany <<", ">> Receipt cancelled <<"},
@@ -142,8 +147,12 @@ namespace RLForwarderConsole
                 {">> Rabat na paragon:", ">> Receipt discount:"},
                 {"Do zwrotu:", "Refund:"},
                 {"Wyplata:", "Cash out:"},
-                {"Wplata:", "Cash in:"},
-                {"Zwrot do paragonu:", "Refund:"}
+                {">> Wplata", ">> Cash in:"},
+                {"Zwrot do paragonu:", "Refund:"},
+                {">> Raport dobowy fiskalny:",">> Z Report"},
+                {">> Otwarcie szuflady",">> Cash drawer open" },
+                {">> Zamkniecie zmiany", ">> Shift closed"},
+                {">> Otwarcie zmiany:",">> Shift open:" }
 
             };
 
@@ -153,33 +162,35 @@ namespace RLForwarderConsole
                 line = line.Replace(entry.Key, entry.Value);
             }
 
-            // Sprawdzenie, czy linia zawiera kwotę zakończoną na "zl."
+            // Checking if the line contains an amount ending with "zl."
+
             if ((line.Contains(" x ") && line.Contains("zl.")) 
                 || (line.Contains("Razem: "))
                 || (line.Contains("Reszta: "))
                 )
             {
-                // Znajdź pozycję, w której zaczyna się " x " i usuń "zl" oraz dodatkowe spacje wokół "x"
+                // Find the position where " x " starts and remove "zl" and any additional spaces around "x"
                 int xPosition = line.LastIndexOf(" x ");
                 if (xPosition != -1)
                 {
                     int zlPosition = line.LastIndexOf("zl.", StringComparison.Ordinal);
                     if (zlPosition > xPosition)
                     {
-                        // Usunięcie "zl" z końca linii
+                        // Remove "zl" from the end of the line
                         line = line.Substring(0, zlPosition) + line.Substring(zlPosition + 3);
                     }
-                    // Usuwanie dodatkowych spacji wokół "x"
+                    // Remove additional spaces around "x"
                     string beforeX = line.Substring(0, xPosition);
                     string afterX = line.Substring(xPosition + 3);
 
-                    // Usuwamy zbędne spacje z końców ciągów przed i po "x"
+                    // Remove unnecessary spaces from the ends of the strings before and after "x"
                     beforeX = beforeX.TrimEnd();
                     afterX = afterX.TrimStart();
 
-                    // Rekonstrukcja linii bez zbędnych spacji wokół "x"
+                    // Reconstruct the line without unnecessary spaces around "x"
                     line = beforeX + "x" + afterX;
                 }
+
             }
 
             return line;
@@ -187,7 +198,7 @@ namespace RLForwarderConsole
 
         private string CreateXmlPayload(List<string> lines)
         {
-            // Budowanie struktury XML z poszczególnych linii
+            // Building the XML structure from individual lines
             var xmlDoc = new XDocument(
                 new XElement("VideoOverlay",
                     new XElement("normalizedScreenSize",
@@ -199,8 +210,8 @@ namespace RLForwarderConsole
                                 new XElement("id", index + 1),
                                 new XElement("enabled", true),
                                 new XElement("positionX", 300),
-                                new XElement("positionY", 500 - index * 30),  // Przesuwamy pozycję Y dla każdej kolejnej linii
-                                new XElement("displayText", line.Length > 42 ? line.Substring(0, 42) : line),  // Obcinamy linię do 42 znaków, jeśli jest dłuższa
+                                new XElement("positionY", 500 - index * 30),  // Shifting the Y position for each subsequent line
+                                new XElement("displayText", line.Length > 42 ? line.Substring(0, 42) : line),  // Trimming the line to 42 characters if it's longer
                                 new XElement("isPersistentText", true)
                             )
                         )
@@ -208,7 +219,8 @@ namespace RLForwarderConsole
                 )
             );
 
-            // Konwersja dokumentu XML do ciągu tekstowego
+
+            
             return xmlDoc.ToString();
         }
 
@@ -221,11 +233,11 @@ namespace RLForwarderConsole
 
             private static string GetCurrentLogFilePath()
             {
-                // Utwórz nazwę pliku z datą i numerem sekwencyjnym
+                
                 string date = DateTime.Now.ToString("yyyyMMdd");
                 int index = 0;
 
-                // Sprawdzaj, czy plik istnieje i czy jego rozmiar przekracza limit
+              
                 string path;
                 do
                 {

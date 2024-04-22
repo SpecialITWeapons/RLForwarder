@@ -9,7 +9,7 @@ namespace RLForwarderConsole
     internal class DigestAuthHeader
     {
         public DigestAuthHeader(string realm, string username, string password, string nonce, string qualityOfProtection,
-            int nonceCount, string clientNonce) //string opaque)
+            int nonceCount, string clientNonce, string opaque) //string opaque)
         {
             Realm = realm;
             Username = username;
@@ -18,7 +18,8 @@ namespace RLForwarderConsole
             QualityOfProtection = qualityOfProtection;
             NonceCount = nonceCount;
             ClientNonce = clientNonce;
-            //Opaque = opaque;
+            Opaque = opaque;
+            Opaque = opaque;
         }
 
         public string Realm { get; }
@@ -28,6 +29,6 @@ namespace RLForwarderConsole
         public string QualityOfProtection { get; }
         public int NonceCount { get; }
         public string ClientNonce { get; }
-        //public string Opaque { get; }
+        public string Opaque { get; }
     }
 }

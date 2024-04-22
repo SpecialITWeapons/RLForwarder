@@ -38,10 +38,11 @@ namespace RLForwarderConsole
 
             // Must be fresh on every request, so low chance of same client nonce here by just using a random number.
             var clientNonce = new Random().Next(123400, 9999999).ToString();
-            //var opaque = GetChallengeValueFromHeader("opaque", wwwAuthenticateHeaderValue);
+            // 
+            var opaque = GetChallengeValueFromHeader("opaque", wwwAuthenticateHeaderValue);
 
             // The nonce count 'nc' doesn't really matter, so we just set this to one. Why we always sending two requests per 1 request
-            var digestHeader = new DigestAuthHeader(realm, username, password, nonce, qop, nonceCount: 1, clientNonce);//opaque
+            var digestHeader = new DigestAuthHeader(realm, username, password, nonce, qop, nonceCount: 1, clientNonce, opaque);//opaque
             var digestRequestHeader = GetDigestHeader(digestHeader, newRequest.RequestUri.ToString(), request.Method);
 
             newRequest.Headers.Add("Authorization", digestRequestHeader);
@@ -84,8 +85,8 @@ namespace RLForwarderConsole
             var headerString =
                 $"Digest username=\"{digest.Username}\", realm=\"{digest.Realm}\", nonce=\"{digest.Nonce}\", uri=\"{digestUri}\", " +
                 $"algorithm=MD5, qop={digest.QualityOfProtection}, nc={digest.NonceCount:00000000}, cnonce=\"{digest.ClientNonce}\", " +
-                $"response=\"{digestResponse}\"";
-            //$"response=\"{digestResponse}\", opaque=\"{digest.Opaque}\"";
+               // $"response=\"{digestResponse}\"";
+               $"response=\"{digestResponse}\", opaque=\"{digest.Opaque}\"";
 
 
             return headerString;
