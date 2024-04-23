@@ -7,7 +7,9 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-
+/*
+ * Based on https://callumhoughton18.github.io/Personal-Site/blog/digest-auth-in-dotnet/
+ */
 namespace RLForwarderConsole
 {
     public static class HttpClientExtensions
@@ -85,13 +87,14 @@ namespace RLForwarderConsole
             var headerString =
                 $"Digest username=\"{digest.Username}\", realm=\"{digest.Realm}\", nonce=\"{digest.Nonce}\", uri=\"{digestUri}\", " +
                 $"algorithm=MD5, qop={digest.QualityOfProtection}, nc={digest.NonceCount:00000000}, cnonce=\"{digest.ClientNonce}\", " +
-               // $"response=\"{digestResponse}\"";
+               // $"response=\"{digestResponse}\""; // Some camera models do not send back opaque in header 
                $"response=\"{digestResponse}\", opaque=\"{digest.Opaque}\"";
 
 
             return headerString;
         }
 
+        
         private static HttpRequestMessage CloneBeforeContentSet(this HttpRequestMessage req)
         {
             // Deep clone of a given request, outlined here:
