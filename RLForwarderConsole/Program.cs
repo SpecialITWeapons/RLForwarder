@@ -20,7 +20,8 @@ namespace RLForwarderConsole
         SerialPort mySerialPort = new SerialPort(ConfigurationManager.AppSettings["ComPort"]);
         Queue<string> linesQueue = new Queue<string>();
         List<string> currentBatch = new List<string>();
-        
+        private static readonly int MaxLinesToSend = int.Parse(ConfigurationManager.AppSettings["MaxLinesToSend"] ?? "4");  // Default to 4 if not specified
+
 
         static async Task Main(string[] args)
         {
@@ -120,11 +121,11 @@ namespace RLForwarderConsole
 
         private async Task ProcessQueue()
         {
-            while (linesQueue.Count > 0 && currentBatch.Count < 4)
+            while (linesQueue.Count > 0 && currentBatch.Count < MaxLinesToSend)
             {
                 currentBatch.Add(linesQueue.Dequeue());
             }
-            if (currentBatch.Count == 4)
+            if (currentBatch.Count >= MaxLinesToSend)
             {
                 await SendDataToApi();
             }
@@ -211,7 +212,7 @@ namespace RLForwarderConsole
                                 new XElement("enabled", true),
                                 new XElement("positionX", 300),
                                 new XElement("positionY", 500 - index * 30),  // Shifting the Y position for each subsequent line
-                                new XElement("displayText", line.Length > 42 ? line.Substring(0, 42) : line),  // Trimming the line to 42 characters if it's longer
+                                new XElement("displayText", line.Length > 42 ? line.Substring(0, 42) : line),  // Trimming the line to 42 characters if it's longer. 42 is the maximum number of characters that can be displayed on one line, value can be adjusted depending on camera model
                                 new XElement("isPersistentText", true)
                             )
                         )
